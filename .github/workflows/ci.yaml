@@ -75,52 +75,52 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-update-gitops:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-    - name: Checkout GitOps repo
-      uses: actions/checkout@v4
-      with:
-        repository: jbluemel/user-service-gitops
-        token: ${{ secrets.GITOPS_TOKEN }}
-        path: gitops
-    
-    - name: Update image tag in dev overlay
-      run: |
-        cd gitops/k8s/overlays/dev
-        
-        # Create or update kustomization.yaml with new image
-        cat > kustomization.yaml << EOF
-        apiVersion: kustomize.config.k8s.io/v1beta1
-        kind: Kustomization
+  update-gitops:
+      needs: build
+      runs-on: ubuntu-latest
+      if: github.ref == 'refs/heads/main'
+      
+      steps:
+      - name: Checkout GitOps repo
+        uses: actions/checkout@v4
+        with:
+          repository: jbluemel/user-service-gitops
+          token: ${{ secrets.GITOPS_TOKEN }}
+          path: gitops
+      
+      - name: Update image tag in dev overlay
+        run: |
+          cd gitops/k8s/overlays/dev
+          
+          # Create or update kustomization.yaml with new image
+          cat > kustomization.yaml << EOF
+          apiVersion: kustomize.config.k8s.io/v1beta1
+          kind: Kustomization
 
-        namespace: dev
+          namespace: dev
 
-        resources:
-        - ../../base/deployment.yaml
-        - ../../base/service.yaml
-        - ../../base/virtualservice.yaml
-        - ../../base/destinationrule.yaml
+          resources:
+          - ../../base/deployment.yaml
+          - ../../base/service.yaml
+          - ../../base/virtualservice.yaml
+          - ../../base/destinationrule.yaml
 
-        namePrefix: dev-
+          namePrefix: dev-
 
-        labels:
-        - pairs:
-            environment: dev
+          labels:
+          - pairs:
+              environment: dev
 
-        images:
-        - name: ghcr.io/jbluemel/user-service-demo
-          newTag: main-${{ github.sha }}
-        EOF
-    
-    - name: Commit and push changes
-      run: |
-        cd gitops
-        git config user.name "GitHub Actions"
-        git config user.email "actions@github.com"
-        git add .
-        git commit -m "Update dev image to main-${{ github.sha }}"
-        git push 
+          images:
+          - name: ghcr.io/jbluemel/user-service-demo
+            newTag: main-${{ github.sha }}
+          EOF
+      
+      - name: Commit and push changes
+        run: |
+          cd gitops
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Update dev image to main-${{ github.sha }}"
+          git push 
